@@ -1,0 +1,324 @@
+/* ============================================================
+   PHARMACY INVENTORY DASHBOARD — style.css
+   ============================================================ */
+
+/* ── Reset & base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Surfaces */
+  --bg:        #f4f3f0;
+  --surface-0: #ececea;
+  --surface-1: #f9f9f8;
+  --surface-2: #ffffff;
+
+  /* Text */
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #898781;
+
+  /* Semantic colours */
+  --danger:  #e34948;
+  --success: #1baf7a;
+  --warning: #eda100;
+  --accent:  #2a78d6;
+
+  /* Borders */
+  --border:       rgba(11, 11, 11, 0.10);
+  --border-strong: rgba(11, 11, 11, 0.18);
+
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg);
+  padding: 20px;
+  min-height: 100vh;
+}
+
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.header-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-name-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-upload:hover {
+  background: var(--surface-1);
+}
+
+.btn-upload i {
+  font-size: 14px;
+}
+
+
+/* ── Error banner ─────────────────────────────────────────── */
+.error-box {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 0.5px solid #fca5a5;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+
+/* ── Empty state ──────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
+  border: 0.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+}
+
+.empty-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.empty-title {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.empty-sub {
+  font-size: 12px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+
+/* ── KPI cards ────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--surface-1);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.metric-value.danger  { color: var(--danger);  }
+.metric-value.success { color: var(--success);  }
+.metric-value.warning { color: var(--warning);  }
+.metric-value.accent  { color: var(--accent);   }
+
+.metric-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+
+/* ── Section boxes ────────────────────────────────────────── */
+.section-box {
+  background: var(--surface-2);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.section-box.scrollable {
+  overflow-y: auto;
+  max-height: 260px;
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+
+/* ── Layout rows ──────────────────────────────────────────── */
+.row-2col {
+  display: grid;
+  grid-template-columns: 1fr 230px;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.row-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 200px;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 760px) {
+  .row-2col,
+  .row-3col {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ── Chart wrappers ───────────────────────────────────────── */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.chart-wrap.h170 { height: 170px; }
+.chart-wrap.h140 { height: 140px; }
+
+
+/* ── Inline bar charts ────────────────────────────────────── */
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.bar-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  width: 110px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.bar-track {
+  flex: 1;
+  background: var(--surface-0);
+  border-radius: 2px;
+  height: 13px;
+  min-width: 0;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.bar-value {
+  font-size: 10px;
+  color: var(--text-muted);
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+
+/* ── Demand class legend ──────────────────────────────────── */
+.legend-box {
+  margin-bottom: 0;
+}
+
+.legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
