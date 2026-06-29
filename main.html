@@ -1,0 +1,301 @@
+<style>
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.dash-root{font-family:var(--font-sans);padding:0 0 32px}
+.metric-card{background:var(--surface-1);border-radius:8px;padding:14px 18px;border:0.5px solid var(--border)}
+.section-box{background:var(--surface-2);border-radius:12px;border:0.5px solid var(--border);padding:16px}
+.upload-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;cursor:pointer;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:transparent;color:var(--text-primary)}
+.upload-btn:hover{background:var(--surface-1)}
+.empty-zone{text-align:center;padding:48px;color:var(--text-muted);border:0.5px dashed var(--border);border-radius:12px}
+button{cursor:pointer}
+</style>
+
+<div class="dash-root">
+  <h2 class="sr-only">Pharmacy Inventory Simulation Dashboard</h2>
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <i class="ti ti-pill" style="font-size:22px;color:var(--text-accent)" aria-hidden="true"></i>
+      <div>
+        <div style="font-size:18px;font-weight:500;color:var(--text-primary)">Pharmacy inventory dashboard</div>
+        <div id="hdr-sub" style="font-size:11px;color:var(--text-muted)">Upload an Excel file to begin</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="file-name" style="font-size:11px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No file loaded</div>
+      <input id="file-input" type="file" accept=".xlsx,.xls" style="display:none">
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+        <i class="ti ti-upload" style="font-size:14px" aria-hidden="true"></i> Upload Excel
+      </button>
+    </div>
+  </div>
+
+  <div id="error-box" style="display:none;background:var(--bg-danger);color:var(--text-danger);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
+
+  <!-- Empty state -->
+  <div id="empty-state" class="empty-zone">
+    <i class="ti ti-file-spreadsheet" style="font-size:32px;margin-bottom:8px;display:block" aria-hidden="true"></i>
+    <div style="font-size:14px">Upload an Excel file to get started</div>
+    <div style="font-size:12px;margin-top:4px">Needs "Daily Demand Data" and "Item Master" sheets</div>
+    <button class="upload-btn" style="margin:16px auto 0;display:inline-flex" onclick="document.getElementById('file-input').click()">
+      Choose file ↗
+    </button>
+  </div>
+
+  <!-- Dashboard (hidden until data loaded) -->
+  <div id="dashboard" style="display:none">
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+      <div class="metric-card">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Total lost sales</div>
+        <div id="kpi-lost" style="font-size:22px;font-weight:500;color:var(--text-danger)">—</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Over simulation period</div>
+      </div>
+      <div class="metric-card">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Total units sold</div>
+        <div id="kpi-sold" style="font-size:22px;font-weight:500;color:#1baf7a">—</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Over simulation period</div>
+      </div>
+      <div class="metric-card">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Expiration waste</div>
+        <div id="kpi-exp" style="font-size:22px;font-weight:500;color:var(--text-warning)">—</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Over simulation period</div>
+      </div>
+      <div class="metric-card">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Critical stockout days</div>
+        <div id="kpi-crit" style="font-size:22px;font-weight:500;color:var(--text-accent)">—</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Over simulation period</div>
+      </div>
+    </div>
+
+    <!-- Row 1 -->
+    <div style="display:grid;grid-template-columns:1fr 230px;gap:12px;margin-bottom:12px">
+      <div class="section-box">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text-primary)">Monthly units sold</div>
+        <div style="position:relative;width:100%;height:170px"><canvas id="chart-monthly" role="img" aria-label="Monthly units sold line chart"></canvas></div>
+      </div>
+      <div class="section-box" style="overflow-y:auto;max-height:240px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)">Lost sales by demand class (PHP K)</div>
+        <div id="bar-demand"></div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div style="display:grid;grid-template-columns:1fr 230px;gap:12px;margin-bottom:12px">
+      <div class="section-box">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text-primary)">Cumulative lost sales (PHP)</div>
+        <div style="position:relative;width:100%;height:170px"><canvas id="chart-cum" role="img" aria-label="Cumulative lost sales area chart"></canvas></div>
+      </div>
+      <div class="section-box" style="overflow-y:auto;max-height:240px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)">Lost sales by category (PHP K)</div>
+        <div id="bar-cat"></div>
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 200px;gap:12px;margin-bottom:12px">
+      <div class="section-box" style="overflow-y:auto;max-height:280px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)">Top 10 items — lost sales (PHP K)</div>
+        <div id="bar-top10lost"></div>
+      </div>
+      <div class="section-box" style="overflow-y:auto;max-height:280px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--text-primary)">Top 10 stockout rate (%)</div>
+        <div id="bar-stockout"></div>
+      </div>
+      <div class="section-box">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--text-primary)">Daily stockouts (7-day rolling avg)</div>
+        <div style="position:relative;width:100%;height:140px"><canvas id="chart-rolling" role="img" aria-label="Daily stockout rolling average chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="section-box">
+      <div style="font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px">Demand class legend</div>
+      <div id="legend" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DEMAND_COLORS = {acute:"#eda100",chronic:"#4a3aa7",acute_holiday:"#e34948",seasonal_allergy:"#1baf7a",steady_otc:"#2a78d6",acute_summer:"#eb6834"};
+const SERIES = ["#2a78d6","#1baf7a","#eda100","#008300","#4a3aa7","#e34948","#e87ba4","#eb6834"];
+let charts = {};
+
+function fmt(n){return Number(n).toLocaleString("en-PH")}
+function fmtM(n){return "PHP "+fmt(Math.round(n))}
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderBar(containerId, data, labelKey, valueKey, color){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const max = Math.max(...data.map(d=>d[valueKey]),1);
+  el.innerHTML = data.map((d,i)=>`
+    <div style="display:flex;align-items:center;margin-bottom:5px;gap:8px">
+      <div style="font-size:10px;color:var(--text-secondary);width:110px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${d[labelKey]}">${d[labelKey]}</div>
+      <div style="flex:1;background:var(--surface-0);border-radius:2px;height:13px">
+        <div style="width:${(d[valueKey]/max)*100}%;background:${color};height:100%;border-radius:2px"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);min-width:38px">${typeof d[valueKey]==="number"?d[valueKey].toFixed(1):d[valueKey]}</div>
+    </div>`).join("");
+}
+
+function renderLegend(){
+  const el = document.getElementById("legend");
+  if(!el) return;
+  el.innerHTML = Object.entries(DEMAND_COLORS).map(([k,c])=>`
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)">
+      <div style="width:10px;height:10px;border-radius:2px;background:${c}"></div>${k.replace(/_/g," ")}
+    </div>`).join("");
+}
+
+function processWorkbook(wb, fileName){
+  document.getElementById("file-name").textContent = fileName || "Loaded";
+  document.getElementById("error-box").style.display="none";
+
+  const sheetNames = wb.SheetNames;
+  const dailySheet = wb.Sheets["Daily Demand Data"] || wb.Sheets[sheetNames[1]];
+  const itemSheet = wb.Sheets["Item Master"] || wb.Sheets[sheetNames[0]];
+  if(!dailySheet){
+    const eb = document.getElementById("error-box");
+    eb.style.display="block";
+    eb.textContent="Could not find 'Daily Demand Data' sheet. Found: "+sheetNames.join(", ");
+    return;
+  }
+
+  const daily = XLSX.utils.sheet_to_json(dailySheet, {raw:false});
+  const items = itemSheet ? XLSX.utils.sheet_to_json(itemSheet) : [];
+
+  let totalLost=0, totalSold=0, totalExp=0;
+  const critDays = new Set();
+  const monthMap={}, dayMap={}, demandMap={}, catMap={}, itemLostMap={}, itemSOMap={}, itemDaysMap={};
+
+  daily.forEach(r=>{
+    const lost = parseFloat(r["Lost Sales Value (PHP)"])||0;
+    const sold = parseFloat(r["Units Sold"])||0;
+    const expired = parseFloat(r["Units Expired"])||0;
+    const price = parseFloat(r["Unit Price (PHP)"])||0;
+    const stockout = parseInt(r["Stockout Flag"])||0;
+    const isCrit = String(r["Is Chronic Critical"]).toLowerCase()==="true";
+    const name = r["Generic Name"]||r["Item ID"]||"Unknown";
+    const cat = r["Category"]||"Unknown";
+    const dc = r["Demand Class"]||"unknown";
+
+    totalLost+=lost; totalSold+=sold; totalExp+=expired*price;
+    
+    const dStr = r["Date"]||"";
+    const d = new Date(dStr);
+    if(!isNaN(d)){
+      if(stockout&&isCrit) critDays.add(dStr);
+      const mKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      monthMap[mKey]=(monthMap[mKey]||0)+sold;
+      dayMap[dStr]=(dayMap[dStr]||0)+lost;
+    }
+
+    demandMap[dc]=(demandMap[dc]||0)+lost;
+    catMap[cat]=(catMap[cat]||0)+lost;
+    itemLostMap[name]=(itemLostMap[name]||0)+lost;
+    itemSOMap[name]=(itemSOMap[name]||0)+stockout;
+    itemDaysMap[name]=(itemDaysMap[name]||0)+1;
+  });
+
+  // Update KPIs
+  document.getElementById("kpi-lost").textContent=fmtM(totalLost);
+  document.getElementById("kpi-sold").textContent=fmt(totalSold);
+  document.getElementById("kpi-exp").textContent=fmtM(totalExp);
+  document.getElementById("kpi-crit").textContent=critDays.size;
+
+  const totalItems = items.length || new Set(daily.map(r=>r["Item ID"])).size;
+  const sortedDays = Object.keys(dayMap).sort();
+  const dr = sortedDays.length ? sortedDays[0]+" to "+sortedDays[sortedDays.length-1] : "N/A";
+  document.getElementById("hdr-sub").textContent=`EDA Report · ${totalItems} items · ${fmt(daily.length)} records · ${dr}`;
+
+  // Monthly chart
+  const months = Object.entries(monthMap).sort();
+  destroyChart("chart-monthly");
+  const ctxM = document.getElementById("chart-monthly").getContext("2d");
+  charts["chart-monthly"] = new Chart(ctxM, {
+    type:"line",
+    data:{labels:months.map(([k])=>k),datasets:[{data:months.map(([,v])=>v),borderColor:"#2a78d6",backgroundColor:"rgba(42,120,214,0.1)",pointBackgroundColor:"#2a78d6",pointBorderColor:"var(--surface-2)",pointBorderWidth:1.5,pointRadius:3,fill:true,tension:0.3,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:t=>t[0].label,label:c=>"Units: "+fmt(c.raw)}}},scales:{x:{ticks:{font:{size:9},color:"#898781",maxRotation:45,autoSkip:true,maxTicksLimit:10},grid:{display:false}},y:{ticks:{font:{size:9},color:"#898781",callback:v=>v>=1000?(v/1000).toFixed(0)+"k":v},grid:{color:"#e1e0d9"}}}}
+  });
+
+  // Cumulative chart
+  let cum=0;
+  const cumData = sortedDays.map((k,i)=>{cum+=(dayMap[k]||0);return{x:i,y:cum};});
+  const step = Math.max(1,Math.floor(cumData.length/200));
+  const cumSampled = cumData.filter((_,i)=>i%step===0||i===cumData.length-1);
+  destroyChart("chart-cum");
+  const ctxC = document.getElementById("chart-cum").getContext("2d");
+  charts["chart-cum"] = new Chart(ctxC, {
+    type:"line",
+    data:{labels:cumSampled.map(d=>"Day "+d.x),datasets:[{data:cumSampled.map(d=>d.y),borderColor:"#e34948",backgroundColor:"rgba(227,73,72,0.3)",fill:true,tension:0.2,borderWidth:2,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>"PHP "+(c.raw/1000000).toFixed(4)+"M"}}},scales:{x:{ticks:{font:{size:9},color:"#898781",maxTicksLimit:6},grid:{display:false}},y:{ticks:{font:{size:9},color:"#898781",callback:v=>"PHP "+(v/1000000).toFixed(2)+"M"},grid:{color:"#e1e0d9"}}}}
+  });
+
+  // Bar: demand
+  const demandData = Object.entries(demandMap).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>({label:k,value:v/1000}));
+  renderBar("bar-demand", demandData, "label","value","#1baf7a");
+
+  // Bar: category
+  const catData = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>({label:k.length>22?k.slice(0,22)+"…":k,value:v/1000}));
+  renderBar("bar-cat", catData, "label","value","#4a3aa7");
+
+  // Bar: top10 lost
+  const top10 = Object.entries(itemLostMap).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>({label:k,value:v/1000}));
+  renderBar("bar-top10lost", top10, "label","value","#eb6834");
+
+  // Bar: stockout rate
+  const soRates = Object.keys(itemDaysMap).map(k=>({label:k,value:(itemSOMap[k]/itemDaysMap[k])*100})).sort((a,b)=>b.value-a.value).slice(0,10);
+  renderBar("bar-stockout", soRates, "label","value","#2a78d6");
+
+  // Rolling avg
+  const rollingVals = sortedDays.map((_,i,arr)=>{
+    const slice=arr.slice(Math.max(0,i-6),i+1).map(k=>{
+      let cnt=0; daily.forEach(r=>{if(r["Date"]===k) cnt+=(parseInt(r["Stockout Flag"])||0);});return cnt;
+    });
+    return slice.reduce((a,b)=>a+b,0)/slice.length;
+  });
+  // Use pre-aggregated dayMap stockout
+  const dayStockoutMap={};
+  daily.forEach(r=>{const k=r["Date"]||"";dayStockoutMap[k]=(dayStockoutMap[k]||0)+(parseInt(r["Stockout Flag"])||0);});
+  const rollingFast = sortedDays.map((_,i)=>{
+    const slice=sortedDays.slice(Math.max(0,i-6),i+1).map(k=>dayStockoutMap[k]||0);
+    return slice.reduce((a,b)=>a+b,0)/slice.length;
+  });
+  const rStep=Math.max(1,Math.floor(rollingFast.length/150));
+  const rSampled=rollingFast.filter((_,i)=>i%rStep===0);
+
+  destroyChart("chart-rolling");
+  const ctxR = document.getElementById("chart-rolling").getContext("2d");
+  charts["chart-rolling"] = new Chart(ctxR, {
+    type:"bar",
+    data:{labels:rSampled.map((_,i)=>""),datasets:[{data:rSampled,backgroundColor:"rgba(74,58,167,0.7)",borderWidth:0,barThickness:"flex"}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{ticks:{font:{size:9},color:"#898781"},grid:{color:"#e1e0d9"}}}}
+  });
+
+  renderLegend();
+  document.getElementById("empty-state").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+}
+
+document.getElementById("file-input").addEventListener("change", function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const wb = XLSX.read(ev.target.result, {type:"array",cellDates:true});
+      processWorkbook(wb, file.name);
+    } catch(err){
+      const eb=document.getElementById("error-box");
+      eb.style.display="block";
+      eb.textContent="Error reading file: "+err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value="";
+});
+</script>
